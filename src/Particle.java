@@ -33,7 +33,7 @@ public class Particle {
         m_width = width;
         m_height = height;
         acceleration = new Vector2();
-        velocity = new Vector2(r.nextInt(3) + 1, r.nextInt(3) - 1);
+        velocity = new Vector2(r.nextInt(10) + 1, r.nextInt(10) - 1);
         location = new Vector2(r.nextInt() % width, r.nextInt() % height);
         maxSpeed = 3.0;
         maxForce = 0.05;
@@ -66,8 +66,8 @@ public class Particle {
         Vector2 rule2 = alignment(boids);
         Vector2 rule3 = cohesion(boids);
 
-        rule1.mult(0);
-        rule2.mult(0);
+        rule1.mult(5);
+        rule2.mult(0.5);
         rule3.mult(1);
 
         applyForce(rule1);
@@ -202,7 +202,7 @@ public class Particle {
         g.rotate(velocity.heading() + PI / 2);
         g.setColor(Color.white);
         g.fill(shape);
-        g.setColor(Color.black);
+        g.setColor(Color.RED);
         g.draw(shape);
 
         g.setTransform(save);
