@@ -10,6 +10,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -18,10 +19,16 @@ import javax.swing.Timer;
 
 class Surface extends JPanel implements ActionListener {
 
-    private final int DELAY = 500;
+    private final int DELAY = 10;
     private Timer timer;
+    AffineTransform identity = new AffineTransform();
+    ArrayList<Particle> particles = new ArrayList<>();
 
     public Surface() {
+        for (int i = 0; i < 200; i++){
+            particles.add(new Particle(1500, 700));
+        }
+
 
         initTimer();
     }
@@ -42,27 +49,26 @@ class Surface extends JPanel implements ActionListener {
         Graphics2D g2d = (Graphics2D) g;
 
         g2d.setPaint(Color.blue);
-
-        int w = getWidth();
-        int h = getHeight();
         BufferedImage image;
 
         try {
             image = ImageIO.read(new File("C:\\Users\\rgard\\IdeaProjects\\ELab-Braitenberg\\src\\triangle.png"));
-            Random r = new Random();
-
-            for (int i = 0; i < 2000; i++) {
-
-                int x = Math.abs(r.nextInt()) % w;
-                int y = Math.abs(r.nextInt()) % h;
-
-//                AffineTransform transform = new AffineTransform();
+            for (int i = 0; i < particles.size(); i++) {
+                Particle p = particles.get(i);
+                p.update(particles);
+                AffineTransform transform = new AffineTransform();
+                transform.setTransform(identity);
+                transform.translate(p.my_pos.getX(), p.my_pos.getY());
+//                System.out.println(p.getDirection());
+                transform.rotate(p.getDirection());
 //                transform.rotate(Math.toRadians(90));
-//
-                g2d.drawImage(image, x, y, this);
+
+                g2d.drawImage(image, transform, this);
             }
         } catch (IOException ex) {
             System.out.println(ex);
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
         }
     }
 
