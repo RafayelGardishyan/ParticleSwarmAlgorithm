@@ -1,131 +1,216 @@
+import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Path2D;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import java.util.Vector;
+
+import static java.lang.Math.PI;
 
 public class Particle {
-    public Vector2 my_pos;
-    private Vector2 my_velocity;
+    private Vector2 acceleration;
+    private Vector2 velocity;
+    public Vector2 location;
+    private double maxSpeed;
+    private double maxForce;
+    private final Random r = new Random();
     private int m_width, m_height;
+    static final int size = 3;
+    static final Path2D shape = new Path2D.Double();
 
-
-    public Vector2 getVelocityVec() {
-        return my_velocity;
+    static {
+        shape.moveTo(0, -size * 2);
+        shape.lineTo(-size, size * 2);
+        shape.lineTo(size, size * 2);
+        shape.closePath();
     }
+
+    private boolean included = true;
+
 
     Particle(int width, int height) {
         m_width = width;
         m_height = height;
-        Random random = new Random();
+        acceleration = new Vector2();
+        velocity = new Vector2(r.nextInt(3) + 1, r.nextInt(3) - 1);
+        location = new Vector2(r.nextInt() % width, r.nextInt() % height);
+        maxSpeed = 3.0;
+        maxForce = 0.05;
+    }
 
-        int x = Math.abs(random.nextInt()) % width;
-        int y = Math.abs(random.nextInt()) % height;
+    public void update() {
+        velocity.add(acceleration);
+        velocity.limit(maxSpeed);
+        location.add(velocity);
+        acceleration.mult(0);
+    }
 
-        my_pos = new Vector2(x, y);
+    void applyForce(Vector2 force) {
+        acceleration.add(force);
+    }
 
-        boolean done = false;
+    Vector2 seek(Vector2 target) {
+        Vector2 steer = Vector2.sub(target, location);
+        steer.normalize();
+        steer.mult(maxSpeed);
+        steer.sub(velocity);
+        steer.limit(maxForce);
+        return steer;
+    }
 
-        while (!done) {
-            x = (random.nextInt() % 10);
-            y = (random.nextInt() % 10);
+    void flock(Graphics2D g, List<Particle> boids) {
+        view(g, boids);
 
-            if (x != 0 && y != 0) {
-                done = true;
+        Vector2 rule1 = separation(boids);
+        Vector2 rule2 = alignment(boids);
+        Vector2 rule3 = cohesion(boids);
+
+        rule1.mult(0);
+        rule2.mult(0);
+        rule3.mult(1);
+
+        applyForce(rule1);
+        applyForce(rule2);
+        applyForce(rule3);
+
+        if (location.getX() < 0){
+            location.setX(m_width);
+        }
+
+        if (location.getY() < 0){
+            location.setY(m_height);
+        }
+
+        if (location.getX() > m_width){
+            location.setX(0);
+        }
+
+        if (location.getY() > m_height){
+            location.setY(0);
+        }
+    }
+
+    void view(Graphics2D g, List<Particle> boids) {
+        double sightDistance = 100;
+        double peripheryAngle = PI * 0.85;
+
+        for (Particle b : boids) {
+            b.included = false;
+
+            if (b == this)
+                continue;
+
+            double d = Vector2.dist(location, b.location);
+            if (d <= 0 || d > sightDistance)
+                continue;
+
+            Vector2 lineOfSight = Vector2.sub(b.location, location);
+
+            double angle = Vector2.angleBetween(lineOfSight, velocity);
+            if (angle < peripheryAngle)
+                b.included = true;
+        }
+    }
+
+    Vector2 separation(List<Particle> boids) {
+        double desiredSeparation = 25;
+
+        Vector2 steer = new Vector2(0, 0);
+        int count = 0;
+        for (Particle b : boids) {
+            if (!b.included)
+                continue;
+
+            double d = Vector2.dist(location, b.location);
+            if ((d > 0) && (d < desiredSeparation)) {
+                Vector2 diff = Vector2.sub(location, b.location);
+                diff.normalize();
+                diff.div(d);        // weight by distance
+                steer.add(diff);
+                count++;
+            }
+        }
+        if (count > 0) {
+            steer.div(count);
+        }
+
+        if (steer.mag() > 0) {
+            steer.normalize();
+            steer.mult(maxSpeed);
+            steer.sub(velocity);
+            steer.limit(maxForce);
+            return steer;
+        }
+        return new Vector2(0, 0);
+    }
+
+    Vector2 alignment(List<Particle> boids) {
+        double preferredDist = 50;
+
+        Vector2 steer = new Vector2(0, 0);
+        int count = 0;
+
+        for (Particle b : boids) {
+            if (!b.included)
+                continue;
+
+            double d = Vector2.dist(location, b.location);
+            if ((d > 0) && (d < preferredDist)) {
+                steer.add(b.velocity);
+                count++;
             }
         }
 
-        my_velocity = new Vector2(x, y);
-    }
-
-    private Particle(Vector2 pos, Vector2 vel) {
-        my_velocity = vel;
-        my_pos = pos;
-    }
-
-
-    public int getDirection() {
-        try {
-            return (int) Math.atan(my_velocity.getY() / my_velocity.getX());
-        } catch (ArithmeticException e){
-            return (int) Math.atan(my_velocity.getY() / (my_velocity.getX() + 1));
+        if (count > 0) {
+            steer.div(count);
+            steer.normalize();
+            steer.mult(maxSpeed);
+            steer.sub(velocity);
+            steer.limit(maxForce);
         }
+        return steer;
     }
 
-    public int getVelocity() {
-        return (int) Math.sqrt((my_velocity.getX() * my_velocity.getX()) + (my_velocity.getY() * my_velocity.getY()));
-    }
+    Vector2 cohesion(List<Particle> boids) {
+        double preferredDist = 50;
 
-    public void algorithm(ArrayList<Particle> o_particles) throws CloneNotSupportedException {
-        ArrayList<Particle> particles = new ArrayList<>();
+        Vector2 target = new Vector2(0, 0);
+        int count = 0;
 
-        for (Particle p : o_particles) {
-            particles.add((Particle) Particle.clone(p));
-        }
+        for (Particle b : boids) {
+            if (!b.included)
+                continue;
 
-        ArrayList<Particle> closest_neighbours = new ArrayList<>();
-
-        while (true) {
-            if (closest_neighbours.size() == 4) {
-                break;
+            double d = Vector2.dist(location, b.location);
+            if ((d > 0) && (d < preferredDist)) {
+                target.add(b.location);
+                count++;
             }
-
-            Particle closest = null;
-
-            int index = 0;
-
-            while (true) {
-                if (closest == null) {
-                    closest = particles.remove(0);
-                }
-
-                if (Vector2.getDistance(my_pos, particles.get(index).my_pos) < Vector2.getDistance(my_pos, closest.my_pos)) {
-                    particles.add(closest);
-                    closest = particles.remove(index);
-                }
-
-                if (index == particles.size() - 1) {
-                    break;
-                }
-
-                index++;
-            }
-
-            closest_neighbours.add(closest);
         }
-
-        ArrayList<Vector2> vectors = new ArrayList<>();
-
-        for (Particle closest_neighbour : closest_neighbours) {
-            vectors.add(closest_neighbour.getVelocityVec());
+        if (count > 0) {
+            target.div(count);
+            return seek(target);
         }
-
-        Vector2 average = Vector2.average(vectors);
-
-//        my_velocity = Vector2.lerp(my_velocity, average, 5);
-        my_velocity = average;
-//        my_velocity = Vector2.lerp(my_velocity, temp, 10);
-
+        return target;
     }
 
-    public void update(ArrayList<Particle> particles) throws CloneNotSupportedException {
-        algorithm(particles);
-        my_pos = Vector2.plus(my_pos, my_velocity);
-        if (my_pos.getY() > m_height + 1){
-            my_pos.setY(0);
-        }
+    void draw(Graphics2D g) {
+        AffineTransform save = g.getTransform();
 
-        if (my_pos.getX() > m_width + 1){
-            my_pos.setX(0);
-        }
+        g.translate(location.getX(), location.getY());
+        g.rotate(velocity.heading() + PI / 2);
+        g.setColor(Color.white);
+        g.fill(shape);
+        g.setColor(Color.black);
+        g.draw(shape);
 
-        if (my_pos.getY() < -1){
-            my_pos.setY(m_height);
-        }
-
-        if (my_pos.getX() < -1){
-            my_pos.setX(m_width);
-        }
+        g.setTransform(save);
     }
 
-    public static Particle clone(Particle p) {
-        return new Particle(p.my_pos, p.getVelocityVec());
+    void run(Graphics2D g, List<Particle> boids, int w, int h) {
+        flock(g, boids);
+        update();
+        draw(g);
     }
 }
