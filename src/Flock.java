@@ -9,9 +9,9 @@ public class Flock {
         boids = new ArrayList<>();
     }
 
-    void run(Graphics2D g, int w, int h) {
+    void run(Graphics2D g, int w, int h, Point mousePos) {
         for (Particle b : boids) {
-            b.run(g, boids, w, h);
+            b.run(g, boids, w, h, mousePos);
         }
     }
 

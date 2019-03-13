@@ -56,12 +56,19 @@ public class Vector2 {
         m_x *= other; m_y *= other;
     }
 
-    public void limit(double limit) {
-        if (m_x > limit){
-            m_x = limit;
+    public void limit(double limit_low, double limit_high) {
+        if (m_x < limit_low){
+            m_x = limit_low;
         }
-        if (m_y > limit){
-            m_y = limit;
+        if (m_y < limit_low){
+            m_y = limit_low;
+        }
+
+        if (m_x > limit_high){
+            m_x = limit_high;
+        }
+        if (m_y > limit_high){
+            m_y = limit_high;
         }
     }
 

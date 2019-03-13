@@ -1,10 +1,8 @@
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Vector;
 
 import static java.lang.Math.PI;
 
@@ -14,6 +12,8 @@ public class Particle {
     public Vector2 location;
     private double maxSpeed;
     private double maxForce;
+    private double minSpeed;
+    private double minForce;
     private final Random r = new Random();
     private int m_width, m_height;
     static final int size = 3;
@@ -33,17 +33,25 @@ public class Particle {
         m_width = width;
         m_height = height;
         acceleration = new Vector2();
-        velocity = new Vector2(r.nextInt(10) + 1, r.nextInt(10) - 1);
+        velocity = new Vector2((r.nextInt() % 10) - 5, (r.nextInt() % 10) - 5);
         location = new Vector2(r.nextInt() % width, r.nextInt() % height);
         maxSpeed = 3.0;
+        minSpeed = -3.0;
         maxForce = 0.05;
+        minForce = -0.05;
     }
 
-    public void update() {
+    public void update(Point mousePos) {
         velocity.add(acceleration);
-        velocity.limit(maxSpeed);
-        location.add(velocity);
+        velocity.limit(minSpeed, maxSpeed);
         acceleration.mult(0);
+// Mouse avoiding: werkt nog niet
+//        Vector2 rule4 = avoid(mousePos);
+//        rule4.mult(100);
+//        applyForce(rule4);
+//        velocity.add(acceleration);
+
+        location.add(velocity);
     }
 
     void applyForce(Vector2 force) {
@@ -55,7 +63,7 @@ public class Particle {
         steer.normalize();
         steer.mult(maxSpeed);
         steer.sub(velocity);
-        steer.limit(maxForce);
+        steer.limit(minForce, maxForce);
         return steer;
     }
 
@@ -66,9 +74,11 @@ public class Particle {
         Vector2 rule2 = alignment(boids);
         Vector2 rule3 = cohesion(boids);
 
+
         rule1.mult(5);
         rule2.mult(0.5);
         rule3.mult(1);
+
 
         applyForce(rule1);
         applyForce(rule2);
@@ -135,13 +145,7 @@ public class Particle {
             steer.div(count);
         }
 
-        if (steer.mag() > 0) {
-            steer.normalize();
-            steer.mult(maxSpeed);
-            steer.sub(velocity);
-            steer.limit(maxForce);
-            return steer;
-        }
+        if (steer(steer)) return steer;
         return new Vector2(0, 0);
     }
 
@@ -167,9 +171,43 @@ public class Particle {
             steer.normalize();
             steer.mult(maxSpeed);
             steer.sub(velocity);
-            steer.limit(maxForce);
+            steer.limit(minForce, maxForce);
         }
         return steer;
+    }
+
+    Vector2 avoid(Point mousePos) {
+        double desiredSeparation = 150;
+        Vector2 mouseVec = new Vector2(mousePos.x, mousePos.y);
+        Vector2 steer = new Vector2(0, 0);
+        int count = 0;
+
+        double d = Vector2.dist(location, mouseVec);
+        if ((d > 0) && (d < desiredSeparation)) {
+            Vector2 diff = Vector2.sub(location, mouseVec);
+            diff.normalize();
+            diff.div(d);        // weight by distance
+            steer.add(diff);
+            count++;
+        }
+        if (count > 0) {
+            steer.div(count);
+        }
+
+        if (steer(steer)) return steer;
+
+        return new Vector2(0, 0);
+    }
+
+    private boolean steer(Vector2 steer) {
+        if (steer.mag() > 0) {
+            steer.normalize();
+            steer.mult(maxSpeed);
+            steer.sub(velocity);
+            steer.limit(minForce, maxForce);
+            return true;
+        }
+        return false;
     }
 
     Vector2 cohesion(List<Particle> boids) {
@@ -208,9 +246,9 @@ public class Particle {
         g.setTransform(save);
     }
 
-    void run(Graphics2D g, List<Particle> boids, int w, int h) {
+    void run(Graphics2D g, List<Particle> boids, int w, int h, Point mousePos) {
         flock(g, boids);
-        update();
+        update(mousePos);
         draw(g);
     }
 }

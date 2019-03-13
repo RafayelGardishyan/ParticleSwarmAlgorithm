@@ -25,7 +25,7 @@ public class Boids extends JPanel {
     }
 
     private void spawnFlock() {
-        flock = Flock.spawn(1500, 700, 300);
+        flock = Flock.spawn(1500, 700, 250);
     }
 
     @Override
@@ -35,7 +35,8 @@ public class Boids extends JPanel {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
 
-        flock.run(g, w, h);
+        Point mousePosition = MouseInfo.getPointerInfo().getLocation();
+        flock.run(g, w, h, mousePosition);
     }
 
     public static void main(String[] args) {
