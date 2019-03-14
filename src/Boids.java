@@ -18,14 +18,12 @@ public class Boids extends JPanel {
         spawnFlock();
 
         new Timer(20, (ActionEvent e) -> {
-            if (flock.hasLeftTheBuilding(w))
-                spawnFlock();
             repaint();
         }).start();
     }
 
     private void spawnFlock() {
-        flock = Flock.spawn(1500, 700, 250);
+        flock = Flock.spawn(1500, 700, 400);
     }
 
     @Override

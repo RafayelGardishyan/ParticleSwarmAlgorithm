@@ -16,13 +16,14 @@ public class Particle {
     private double minForce;
     private final Random r = new Random();
     private int m_width, m_height;
-    static final int size = 3;
+    static final int size = 2;
     static final Path2D shape = new Path2D.Double();
 
     static {
         shape.moveTo(0, -size * 2);
-        shape.lineTo(-size, size * 2);
-        shape.lineTo(size, size * 2);
+        shape.lineTo(-size * 1.5, size * 2);
+        shape.lineTo(size * 1.5, size * 2);
+
         shape.closePath();
     }
 
@@ -176,28 +177,28 @@ public class Particle {
         return steer;
     }
 
-    Vector2 avoid(Point mousePos) {
-        double desiredSeparation = 150;
-        Vector2 mouseVec = new Vector2(mousePos.x, mousePos.y);
-        Vector2 steer = new Vector2(0, 0);
-        int count = 0;
-
-        double d = Vector2.dist(location, mouseVec);
-        if ((d > 0) && (d < desiredSeparation)) {
-            Vector2 diff = Vector2.sub(location, mouseVec);
-            diff.normalize();
-            diff.div(d);        // weight by distance
-            steer.add(diff);
-            count++;
-        }
-        if (count > 0) {
-            steer.div(count);
-        }
-
-        if (steer(steer)) return steer;
-
-        return new Vector2(0, 0);
-    }
+//    Vector2 avoid(Point mousePos) {
+//        double desiredSeparation = 150;
+//        Vector2 mouseVec = new Vector2(mousePos.x, mousePos.y);
+//        Vector2 steer = new Vector2(0, 0);
+//        int count = 0;
+//
+//        double d = Vector2.dist(location, mouseVec);
+//        if ((d > 0) && (d < desiredSeparation)) {
+//            Vector2 diff = Vector2.sub(location, mouseVec);
+//            diff.normalize();
+//            diff.div(d);        // weight by distance
+//            steer.add(diff);
+//            count++;
+//        }
+//        if (count > 0) {
+//            steer.div(count);
+//        }
+//
+//        if (steer(steer)) return steer;
+//
+//        return new Vector2(0, 0);
+//    }
 
     private boolean steer(Vector2 steer) {
         if (steer.mag() > 0) {
@@ -238,7 +239,7 @@ public class Particle {
 
         g.translate(location.getX(), location.getY());
         g.rotate(velocity.heading() + PI / 2);
-        g.setColor(Color.white);
+        g.setColor(Color.WHITE);
         g.fill(shape);
         g.setColor(Color.RED);
         g.draw(shape);

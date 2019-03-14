@@ -15,14 +15,6 @@ public class Flock {
         }
     }
 
-    boolean hasLeftTheBuilding(int w) {
-        int count = 0;
-        for (Particle b : boids) {
-            if (b.location.getX() + Particle.size > w)
-                count++;
-        }
-        return boids.size() == count;
-    }
 
     void addBoid(Particle b) {
         boids.add(b);
