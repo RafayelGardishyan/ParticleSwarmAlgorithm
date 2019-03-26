@@ -17,13 +17,11 @@ public class Boids extends JPanel {
 
         spawnFlock();
 
-        new Timer(20, (ActionEvent e) -> {
-            repaint();
-        }).start();
+        new Timer(20, (ActionEvent e) -> repaint()).start();
     }
 
     private void spawnFlock() {
-        flock = Flock.spawn(1500, 700, 400);
+        flock = Flock.spawn(1500, 700, 250);
     }
 
     @Override
@@ -41,7 +39,7 @@ public class Boids extends JPanel {
         SwingUtilities.invokeLater(() -> {
             JFrame f = new JFrame();
             f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            f.setTitle("Braitengerg Patroon: Spreeuwenzwerm");
+            f.setTitle("Vliegtuighommels");
             f.setResizable(true);
             f.add(new Boids(), BorderLayout.CENTER);
 

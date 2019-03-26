@@ -1,6 +1,10 @@
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
@@ -18,8 +22,16 @@ public class Particle {
     private int m_width, m_height;
     static final int size = 2;
     static final Path2D shape = new Path2D.Double();
+    static BufferedImage triangle = null;
 
     static {
+        try {
+            triangle = ImageIO.read(new File("C:\\Users\\4797\\Downloads\\ParticleSwarmAlgorithm-master\\src\\triangle.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
         shape.moveTo(0, -size * 2);
         shape.lineTo(-size * 1.5, size * 2);
         shape.lineTo(size * 1.5, size * 2);
@@ -237,13 +249,14 @@ public class Particle {
     void draw(Graphics2D g) {
         AffineTransform save = g.getTransform();
 
-        g.translate(location.getX(), location.getY());
+        g.translate(location.getX(), location.getY() - 10);
         g.rotate(velocity.heading() + PI / 2);
-        g.setColor(Color.WHITE);
+        /*g.setColor(Color.WHITE);
         g.fill(shape);
-        g.setColor(Color.RED);
-        g.draw(shape);
+        g.setColor(Color.RED);*/
 
+//        g.draw(shape);
+        g.drawImage(triangle, 0, 0, triangle.getWidth() / 2, triangle.getHeight() / 2, null);
         g.setTransform(save);
     }
 
